@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- REAL Firebase project: 212Flow (flow-5d4d3) — auto-configured via firebase-tools -->
+    <string name="firebase_api_key" translatable="false">AIzaSyDnjNywU0te_d7jR2jkeAJw9eEx11362RI</string>
+    <string name="firebase_project_id" translatable="false">flow-5d4d3</string>
+    <string name="firebase_app_id" translatable="false">1:819995014459:android:87e80b21e95e11a720b31e</string>
+    <bool name="cloud_mode_enabled" translatable="false">true</bool>
+</resources>

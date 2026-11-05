@@ -1,0 +1,86 @@
+rules_version = '2';
+
+// TapCard Firestore security rules — deploy with:
+//   firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function validSlug(s) { return s is string && s.matches('[a-z0-9][a-z0-9-]{2,39}'); }
+    function str(v, max) { return v is string && v.size() <= max; }
+
+    // ---------- users ----------
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['email','displayName','createdAt','migratedAt'])
+        && str(request.resource.data.email, 254);
+      allow delete: if false;
+    }
+
+    // ---------- cards (owner-private) ----------
+    match /cards/{cardId} {
+      allow read: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+      allow create: if isSignedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && validSlug(request.resource.data.slug)
+        && str(request.resource.data.name, 120)
+        && str(request.resource.data.jobTitle, 120)
+        && str(request.resource.data.company, 120)
+        && str(request.resource.data.email, 254)
+        && str(request.resource.data.phone, 40)
+        && str(request.resource.data.website, 300)
+        && request.resource.data.socials is list
+        && request.resource.data.socials.size() <= 10
+        && request.resource.data.accentIndex is number
+        && request.resource.data.accentIndex >= 0
+        && request.resource.data.accentIndex <= 4
+        && (!('templateIndex' in request.resource.data.getKeys()) || (
+             request.resource.data.templateIndex is number
+             && request.resource.data.templateIndex >= 0
+             && request.resource.data.templateIndex <= 3))
+        && request.resource.data.isPublic is bool;
+      allow update: if isSignedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && validSlug(request.resource.data.slug)
+        && str(request.resource.data.name, 120);
+      allow delete: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // ---------- slugs (global uniqueness registry) ----------
+    match /slugs/{slug} {
+      // Creating a slug doc requires claiming it in a transaction that also
+      // writes the card; rules enforce shape + immutability of the mapping.
+      allow read: if true; // existence check is needed for client transactions
+      allow create: if isSignedIn()
+        && slug == slug.toLowerCase()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.cardId is string;
+      allow update: if false; // slug mappings are immutable
+      allow delete: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // ---------- public profiles (explicitly public projection) ----------
+    match /publicProfiles/{slug} {
+      allow read: if true; // this document contains ONLY public fields
+      allow create: if isSignedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.keys().hasOnly(
+             ['name','jobTitle','company','email','phone','website','socials',
+              'profileImageUrl','logoUrl','address','about','accentIndex',
+              'ownerUid','cardId','updatedAt'])
+        && str(request.resource.data.name, 120);
+      allow update: if isSignedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // ---------- default deny ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

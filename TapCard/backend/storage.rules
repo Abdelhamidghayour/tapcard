@@ -1,0 +1,17 @@
+rules_version = '2';
+
+// TapCard Storage rules — profile images only
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{uid}/cards/{cardId}/profile.jpg {
+      allow read: if true; // images referenced by public profiles
+      allow write: if request.auth != null && request.auth.uid == uid
+        && request.resource.size <= 2 * 1024 * 1024      // ≤ 2 MB
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

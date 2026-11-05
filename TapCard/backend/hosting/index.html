@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Digital Business Card — TapCard</title>
+<meta property="og:title" content="Digital Business Card" />
+<meta property="og:description" content="Shared with TapCard — tap to save the contact." />
+<meta property="og:type" content="profile" />
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+    background: #FAF9F6; color: #101828;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    width: 100%; max-width: 420px; border-radius: 28px; overflow: hidden;
+    box-shadow: 0 24px 60px rgba(16,24,40,.16);
+    background: #fff; border: 1px solid #E9E6DF;
+  }
+  .hero { padding: 40px 28px 30px; text-align: center; color: #F4F2EC;
+    background: linear-gradient(160deg, #101828 0%, #1D2433 100%); position: relative; }
+  .hero::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: #C9A961; }
+  .avatar { width: 96px; height: 96px; border-radius: 50%; margin: 0 auto 16px;
+    object-fit: cover; border: 2px solid rgba(201,169,97,.65);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:32px;
+    color: #C9A961; font-family: Georgia, "Times New Roman", serif; }
+  h1 { font-family: Georgia, "Times New Roman", serif; font-size: 27px; letter-spacing: -.4px; }
+  .role { opacity: .82; margin-top: 6px; font-size: 15px; }
+  .body { padding: 22px 20px 28px; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 13px 6px;
+    border-bottom: 1px solid #F1EEE7; color:#101828; text-decoration:none; }
+  .row:last-of-type { border-bottom: none; }
+  .row .label { font-size: 10.5px; color: #9AA0AC; letter-spacing: 1.5px; font-weight: 600; }
+  .row .value { font-size: 15px; word-break: break-all; margin-top: 2px; }
+  .rule { height: 1px; background: rgba(201,169,97,.35); margin: 4px 0 12px; }
+  .actions { display: grid; gap: 10px; margin-top: 18px; }
+  .btn { display: block; text-align: center; padding: 14px; border-radius: 14px;
+    font-weight: 600; text-decoration: none; cursor: pointer; border: 0; font-size: 15px; }
+  .btn.primary { background: #101828; color: #FAF9F6; }
+  .btn.primary:active { background: #1D2433; }
+  .btn.ghost { background: #F3EADA; color: #8C7038; }
+  .brand { text-align: center; color: #C9A961; font-size: 10px; letter-spacing: 3px;
+    font-weight: 700; margin-top: 16px; }
+  .muted { text-align: center; color: #6B6F7A; font-size: 13px; margin-top: 6px; }
+  .error { text-align:center; padding: 48px 24px; }
+</style>
+</head>
+<body>
+  <main class="card" id="card">
+    <div class="error" id="status">Loading…</div>
+    <div id="content" style="display:none">
+      <div class="hero">
+        <div class="avatar" id="avatar">·</div>
+        <h1 id="name">—</h1>
+        <p class="role" id="role"></p>
+      </div>
+      <div class="body">
+        <div id="rows"></div>
+        <div class="rule"></div>
+        <div class="actions">
+          <button class="btn primary" id="saveContact">Save contact (vCard)</button>
+          <a class="btn ghost" id="copyLink">Copy link</a>
+        </div>
+        <p class="brand">TAPCARD</p>
+        <p class="muted">Your identity. One tap away.</p>
+      </div>
+    </div>
+  </main>
+
+<script type="module">
+  // ---- Firebase web config: PASTE your real web app config here (Tier 1) ----
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "PASTE_WEB_API_KEY",
+    authDomain: "PASTE_PROJECT.firebaseapp.com",
+    projectId: "PASTE_PROJECT_ID",
+    storageBucket: "PASTE_PROJECT.appspot.com",
+  };
+
+  const slug = location.pathname.split("/").filter(Boolean).pop() || "";
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g,
+    (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+  try {
+    const db = getFirestore(initializeApp(firebaseConfig));
+    const snap = await getDoc(doc(db, "publicProfiles", slug));
+    if (!snap.exists()) throw new Error("not-found");
+    const p = snap.data();
+
+    document.getElementById("status").style.display = "none";
+    document.getElementById("content").style.display = "block";
+    document.title = `${p.name} — Digital Business Card`;
+
+    const initials = p.name.trim().split(/\s+/).slice(0,2)
+      .map(w => w[0]?.toUpperCase() ?? "").join("");
+    const avatarEl = document.getElementById("avatar");
+    if (p.profileImageUrl) {
+      avatarEl.innerHTML = `<img src="${esc(p.profileImageUrl)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
+    } else { avatarEl.textContent = initials; }
+    document.getElementById("name").textContent = p.name;
+    document.getElementById("role").textContent =
+      [p.jobTitle, p.company].filter(Boolean).join(" · ");
+
+    const rows = document.getElementById("rows");
+    const addRow = (label, value, href) => {
+      if (!value) return;
+      const a = document.createElement("a");
+      a.className = "row";
+      a.href = href || "#";
+      a.innerHTML = `<div><div class="label">${esc(label)}</div>
+        <div class="value">${esc(value)}</div></div>`;
+      rows.appendChild(a);
+    };
+    addRow("PHONE", p.phone, p.phone ? `tel:${p.phone.replace(/\s+/g,"")}` : null);
+    addRow("EMAIL", p.email, p.email ? `mailto:${p.email}` : null);
+    addRow("WEB", p.website, p.website);
+    (p.socials || []).forEach(s => addRow(s.platform.toUpperCase(), s.url, s.url));
+
+    const publicUrl = location.href.split("?")[0];
+    const vcard = buildVCard(p, publicUrl);
+    document.getElementById("saveContact").onclick = () => {
+      const blob = new Blob([vcard], { type: "text/vcard" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${p.slug || "contact"}.vcf`;
+      a.click();
+    };
+    document.getElementById("copyLink").onclick = async () => {
+      await navigator.clipboard.writeText(publicUrl);
+      document.getElementById("copyLink").textContent = "Link copied ✓";
+    };
+  } catch (e) {
+    document.getElementById("status").textContent = e.message === "not-found"
+      ? "This business card link is not available." : "Failed to load the card.";
+  }
+
+  function buildVCard(p, url) {
+    const lines = ["BEGIN:VCARD","VERSION:3.0",`FN:${p.name}`];
+    const parts = p.name.trim().split(/\s+/);
+    lines.push(`N:${parts.length>1?parts[parts.length-1]:parts[0]};${parts.length>1?parts[0]:""}`);
+    if (p.jobTitle) lines.push(`TITLE:${p.jobTitle}`);
+    if (p.company) lines.push(`ORG:${p.company}`);
+    if (p.phone) lines.push(`TEL;TYPE=CELL:${p.phone}`);
+    if (p.email) lines.push(`EMAIL;TYPE=INTERNET:${p.email}`);
+    if (p.website) lines.push(`URL:${p.website}`);
+    (p.socials||[]).forEach(s => lines.push(`X-SOCIALPROFILE;TYPE=${s.platform.toLowerCase()}:${s.url}`));
+    lines.push(`URL:${url}`, "END:VCARD");
+    return lines.join("\r\n");
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Alex Morgan — Digital Business Card · TapCard</title>
+<meta name="description" content="Alex Morgan — Product Designer at Northwind Studio. Tap to view and save the contact." />
+<meta property="og:title" content="Alex Morgan — Digital Business Card" />
+<meta property="og:description" content="Product Designer · Northwind Studio. Tap to save the contact." />
+<meta property="og:type" content="profile" />
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+    background: #08070D; color: #F5F3FA;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .glow { position: fixed; width: 640px; height: 640px; border-radius: 50%;
+    background: rgba(168,85,247,.14); filter: blur(110px); top: -200px; left: 50%;
+    transform: translateX(-50%); pointer-events: none; }
+  .card {
+    position: relative; width: 100%; max-width: 430px; border-radius: 30px; overflow: hidden;
+    background: #12111A; border: 1px solid #2A2440;
+    box-shadow: 0 40px 90px rgba(124,58,237,.28);
+  }
+  .hero { padding: 42px 26px 30px; text-align: center; position: relative;
+    background: linear-gradient(160deg,#17101F,#3B1D54); }
+  .hero::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg,#7C3AED,#C084FC); }
+  .avatar { width: 104px; height: 104px; border-radius: 50%; margin: 0 auto 16px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(168,85,247,.16); border: 2px solid rgba(168,85,247,.65);
+    color: #C084FC; font-weight: 800; font-size: 34px; position: relative; }
+  .avatar::after { content: "⌁"; position: absolute; bottom: 0; right: 0; width: 30px; height: 30px;
+    background: #12111A; border: 1px solid #A855F7; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; color: #A855F7; }
+  h1 { font-size: 27px; font-weight: 800; letter-spacing: -.6px; }
+  .role { color: #B9A6D6; margin-top: 6px; font-size: 15px; }
+  .body { padding: 20px 20px 26px; }
+  .row { display: flex; gap: 12px; padding: 13px 6px; border-bottom: 1px solid #1B1728;
+    color: #F5F3FA; text-decoration: none; align-items: center; }
+  .row:last-of-type { border-bottom: none; }
+  .row .label { font-size: 10.5px; color: #77718C; letter-spacing: 1.6px; font-weight: 700; width: 66px; }
+  .row .value { font-size: 15px; word-break: break-all; }
+  .socials { display: flex; gap: 10px; margin: 16px 0 4px; flex-wrap: wrap; }
+  .s { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 16px; text-decoration: none; }
+  .s.in { background: #0A66C2; } .s.wa { background: #25D366; } .s.ig { background: #E1306C; }
+  .s.fb { background: #1877F2; } .s.x { background: #202020; } .s.web { background: #475569; }
+  .about { background: #1A1826; border: 1px solid #2A2440; border-radius: 18px;
+    padding: 16px; font-size: 14px; line-height: 1.6; color: #C9C5D8; margin-top: 4px; }
+  .about b { color: #F5F3FA; display: block; margin-bottom: 6px; font-size: 13px; }
+  .actions { display: grid; gap: 10px; margin-top: 18px; }
+  .btn { display: block; text-align: center; padding: 15px; border-radius: 16px;
+    font-weight: 700; text-decoration: none; cursor: pointer; border: 0; font-size: 15px; width: 100%; }
+  .btn.primary { background: linear-gradient(135deg,#7C3AED,#A855F7,#C084FC); color: #fff;
+    box-shadow: 0 0 30px rgba(168,85,247,.4); }
+  .btn.lime { background: #D7F647; color: #12160A; }
+  .btn.ghost { background: #1A1826; color: #C084FC; border: 1px solid #2A2440; }
+  .brand { text-align: center; color: #A855F7; font-size: 10px; letter-spacing: 3px;
+    font-weight: 800; margin-top: 18px; }
+  .muted { text-align: center; color: #6B6F7A; font-size: 12.5px; margin-top: 5px; }
+  .note { text-align: center; color: #55506B; font-size: 11px; margin-top: 14px; }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <main class="card">
+    <div class="hero">
+      <div class="avatar">AM</div>
+      <h1>Alex Morgan</h1>
+      <p class="role">Product Designer · Northwind Studio</p>
+    </div>
+    <div class="body">
+      <div class="about"><b>About me</b><span id="aboutText"></span></div>
+      <div class="socials" id="socials"></div>
+      <a class="row" id="r-phone"><span class="label">PHONE</span><span class="value"></span></a>
+      <a class="row" id="r-email"><span class="label">EMAIL</span><span class="value"></span></a>
+      <a class="row" id="r-web"><span class="label">WEB</span><span class="value"></span></a>
+      <div class="actions">
+        <button class="btn primary" id="saveContact">Save contact (vCard)</button>
+        <a class="btn lime" id="copyLink">Copy profile link</a>
+        <a class="btn ghost" href="index.html">← Back to TapCard</a>
+      </div>
+      <p class="brand">TAPCARD</p>
+      <p class="muted">Your identity. One tap away.</p>
+      <p class="note">Demo profile — the deployed Firebase version loads real cards from /p/{slug}.</p>
+    </div>
+  </main>
+
+<script type="module">
+  // Demo profile (static). When Firebase is configured, this page is served by
+  // Cloud Functions with live data from Firestore publicProfiles/{slug}.
+  const profile = {
+    name: "Alex Morgan",
+    jobTitle: "Product Designer",
+    company: "Northwind Studio",
+    phone: "+1 415 555 0134",
+    email: "alex@northwind.studio",
+    website: "https://northwind.studio",
+    about: "Helping teams craft thoughtful product experiences — from first sketch to shipped release.",
+    slug: "alex-morgan",
+    socials: [
+      { platform: "LinkedIn", url: "https://linkedin.com/in/alexmorgan" },
+      { platform: "WhatsApp", url: "https://wa.me/14155550134" },
+      { platform: "Instagram", url: "https://instagram.com/alexmorgan" },
+      { platform: "Facebook", url: "https://facebook.com/alexmorgan" },
+    ],
+  };
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g,
+    (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  const publicUrl = location.href.split("?")[0].replace("profile.html", "p/" + profile.slug);
+
+  document.getElementById("aboutText").textContent = profile.about;
+
+  const socialsEl = document.getElementById("socials");
+  const key = (p) => p.toLowerCase() === "whatsapp" ? "wa"
+    : p.toLowerCase() === "linkedin" ? "in"
+    : p.toLowerCase() === "instagram" ? "ig"
+    : p.toLowerCase() === "facebook" ? "fb"
+    : p.toLowerCase() === "x" ? "x" : "web";
+  const glyph = (p) => p.toLowerCase() === "whatsapp" ? "✆"
+    : p.toLowerCase() === "linkedin" ? "in"
+    : p.toLowerCase() === "instagram" ? "◉"
+    : p.toLowerCase() === "facebook" ? "f"
+    : p.toLowerCase() === "x" ? "𝕏" : p[0].toUpperCase();
+  profile.socials.forEach((s) => {
+    const a = document.createElement("a");
+    a.className = "s " + key(s.platform);
+    a.href = s.url; a.target = "_blank"; a.rel = "noopener";
+    a.textContent = glyph(s.platform);
+    socialsEl.appendChild(a);
+  });
+
+  const setRow = (id, value, href) => {
+    const el = document.getElementById(id);
+    if (!value) { el.style.display = "none"; return; }
+    el.querySelector(".value").textContent = value;
+    if (href) el.href = href;
+  };
+  setRow("r-phone", profile.phone, "tel:" + profile.phone.replace(/\s+/g, ""));
+  setRow("r-email", profile.email, "mailto:" + profile.email);
+  setRow("r-web", profile.website, profile.website);
+
+  const vcard = [
+    "BEGIN:VCARD", "VERSION:3.0", `FN:${profile.name}`,
+    `N:${profile.name.split(" ").pop()};${profile.name.split(" ")[0]}`,
+    `TITLE:${profile.jobTitle}`, `ORG:${profile.company}`,
+    `TEL;TYPE=CELL:${profile.phone}`, `EMAIL;TYPE=INTERNET:${profile.email}`,
+    `URL:${profile.website}`,
+    ...profile.socials.map(s => `X-SOCIALPROFILE;TYPE=${s.platform.toLowerCase()}:${s.url}`),
+    `URL:${publicUrl}`, "END:VCARD",
+  ].join("\r\n");
+
+  document.getElementById("saveContact").onclick = () => {
+    const blob = new Blob([vcard], { type: "text/vcard" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${profile.slug}.vcf`;
+    a.click();
+  };
+  document.getElementById("copyLink").onclick = async (e) => {
+    e.preventDefault();
+    await navigator.clipboard.writeText(publicUrl);
+    e.target.textContent = "Link copied ✓";
+  };
+</script>
+</body>
+</html>
