@@ -14,7 +14,8 @@ object CardMappers {
     val PUBLIC_FIELDS = listOf(
         "name", "jobTitle", "company", "email", "phone", "website",
         "socials", "profileImageUrl", "logoUrl", "address", "about",
-        "accentIndex", "ownerUid", "cardId", "updatedAt",
+        "accentIndex", "templateIndex", "landscape", "headerImage",
+        "ownerUid", "cardId", "updatedAt",
     )
 
     fun toCardMap(card: BusinessCard, ownerUid: String): Map<String, Any?> = mapOf(
@@ -32,6 +33,8 @@ object CardMappers {
         "about" to card.about,
         "accentIndex" to card.accentIndex.toLong(),
         "templateIndex" to card.templateIndex.toLong(),
+        "landscape" to card.landscape,
+        "headerImage" to card.headerImage,
         "slug" to card.slug,
         "isPublic" to true,
         "createdAt" to card.createdAt,
@@ -77,6 +80,8 @@ object CardMappers {
         address = data["address"] as? String,
         about = data["about"] as? String,
         templateIndex = (data["templateIndex"] as? Number)?.toInt() ?: 0,
+        landscape = data["landscape"] as? Boolean ?: false,
+        headerImage = data["headerImage"] as? String ?: "auto",
     )
 }
 

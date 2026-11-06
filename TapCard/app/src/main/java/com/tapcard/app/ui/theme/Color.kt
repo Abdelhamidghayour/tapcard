@@ -91,41 +91,50 @@ data class CardTemplate(
 )
 
 val CardTemplates = listOf(
-    CardTemplate( // 0 — Midnight (now plasma-coherent: violet accent, sans name)
-        name = "Midnight",
-        background = Brush.linearGradient(listOf(Color(0xFF0E0C18), Color(0xFF1B1533))),
-        ink = TextBright,
-        subInk = TextDim,
-        accent = PlasmaMid,
+    CardTemplate( // 0 — Executive: rich black + champagne gold, serif display
+        name = "Executive",
+        background = Brush.linearGradient(listOf(Color(0xFF0B0A10), Color(0xFF1A1712))),
+        ink = Color(0xFFF6F1E7),
+        subInk = Color(0xFFB7AE9C),
+        accent = Color(0xFFC9A961),
         isDarkSurface = true,
-        serifName = false,
-    ),
-    CardTemplate( // 1 — Champagne Ivory (deliberate light alternate)
-        name = "Champagne",
-        background = Brush.linearGradient(listOf(Color(0xFFF7F3EA), Color(0xFFEFE8D9))),
-        ink = Color(0xFF101828),
-        subInk = Color(0xFF6E6A5E),
-        accent = Color(0xFFA98B4F),
-        isDarkSurface = false,
         serifName = true,
     ),
-    CardTemplate( // 2 — Plasma Violet (signature 2026 template, stronger glow)
-        name = "Plasma",
-        background = Brush.linearGradient(listOf(Color(0xFF17101F), Color(0xFF3B1D54))),
-        ink = Color(0xFFF3EFFF),
-        subInk = Color(0xFFB9A6D6),
-        accent = PlasmaEnd,
+    CardTemplate( // 1 — Minimal: paper white, hairline rules, sans
+        name = "Minimal",
+        background = Brush.linearGradient(listOf(Color(0xFFFFFFFF), Color(0xFFF6F5F2))),
+        ink = Color(0xFF111114),
+        subInk = Color(0xFF6E6E74),
+        accent = Color(0xFF111114),
+        isDarkSurface = false,
+        serifName = false,
+    ),
+    CardTemplate( // 2 — Corporate: deep navy + white, structured
+        name = "Corporate",
+        background = Brush.linearGradient(listOf(Color(0xFF0E2A47), Color(0xFF123A5F))),
+        ink = Color(0xFFF2F7FC),
+        subInk = Color(0xFFA9C1D9),
+        accent = Color(0xFFD8E5F0),
+        isDarkSurface = true,
+        serifName = true,
+    ),
+    CardTemplate( // 3 — Modern: plasma gradient, energetic
+        name = "Modern",
+        background = Brush.linearGradient(listOf(Color(0xFF2A1656), Color(0xFF6D28D9), Color(0xFF9333EA))),
+        ink = Color(0xFFFDFBFF),
+        subInk = Color(0xFFDDC9F5),
+        accent = Color(0xFFE9D5FF),
         isDarkSurface = true,
         serifName = false,
     ),
-    CardTemplate( // 3 — Editorial Mono (deliberate light alternate)
-        name = "Editorial",
-        background = Brush.linearGradient(listOf(Color(0xFFFFFFFF), Color(0xFFF5F4F1))),
-        ink = Color(0xFF171717),
-        subInk = Color(0xFF71716B),
-        accent = Color(0xFF171717),
+    CardTemplate( // 4 — Signature: ivory canvas, brand-mark focused
+        name = "Signature",
+        background = Brush.linearGradient(listOf(Color(0xFFFBF7EF), Color(0xFFF1E9DB))),
+        ink = Color(0xFF241F17),
+        subInk = Color(0xFF7A715F),
+        accent = Color(0xFF8C7038),
         isDarkSurface = false,
-        serifName = false,
+        serifName = true,
     ),
 )
 

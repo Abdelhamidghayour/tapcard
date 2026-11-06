@@ -25,8 +25,12 @@ data class BusinessCard(
     val address: String? = null,
     /** Short "About me" bio shown on the profile and public page. */
     val about: String? = null,
-    /** Index into CardTemplates (0 = Midnight Executive). */
+    /** Index into CardTemplates (0 = Executive). */
     val templateIndex: Int = 0,
+    /** false = portrait card, true = landscape card. */
+    val landscape: Boolean = false,
+    /** What occupies the card header: auto | logo | photo | initials. */
+    val headerImage: String = "auto",
 ) {
     /** Public profile page. Backend replaces the host once deployed. */
     val publicUrl: String get() = "$PUBLIC_URL_BASE$slug"
