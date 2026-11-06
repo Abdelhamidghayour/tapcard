@@ -22,24 +22,26 @@ service cloud.firestore {
     // ---------- cards (owner-private) ----------
     match /cards/{cardId} {
       allow read: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+      function optStr(field, max) {
+        return field == null || (field is string && field.size() <= max);
+      }
       allow create: if isSignedIn()
         && request.resource.data.ownerUid == request.auth.uid
         && validSlug(request.resource.data.slug)
         && str(request.resource.data.name, 120)
-        && str(request.resource.data.jobTitle, 120)
-        && str(request.resource.data.company, 120)
-        && str(request.resource.data.email, 254)
-        && str(request.resource.data.phone, 40)
-        && str(request.resource.data.website, 300)
+        && optStr(request.resource.data.jobTitle, 120)
+        && optStr(request.resource.data.company, 120)
+        && optStr(request.resource.data.email, 254)
+        && optStr(request.resource.data.phone, 40)
+        && optStr(request.resource.data.website, 300)
         && request.resource.data.socials is list
         && request.resource.data.socials.size() <= 10
         && request.resource.data.accentIndex is number
         && request.resource.data.accentIndex >= 0
         && request.resource.data.accentIndex <= 4
-        && (!('templateIndex' in request.resource.data.getKeys()) || (
-             request.resource.data.templateIndex is number
-             && request.resource.data.templateIndex >= 0
-             && request.resource.data.templateIndex <= 3))
+        && request.resource.data.get('templateIndex', 0) is number
+        && request.resource.data.get('templateIndex', 0) >= 0
+        && request.resource.data.get('templateIndex', 0) <= 3
         && request.resource.data.isPublic is bool;
       allow update: if isSignedIn()
         && resource.data.ownerUid == request.auth.uid
@@ -69,7 +71,7 @@ service cloud.firestore {
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.keys().hasOnly(
              ['name','jobTitle','company','email','phone','website','socials',
-              'profileImageUrl','logoUrl','address','about','accentIndex',
+              'profileImageUrl','logoUrl','address','about','accentIndex','templateIndex',
               'ownerUid','cardId','updatedAt'])
         && str(request.resource.data.name, 120);
       allow update: if isSignedIn()

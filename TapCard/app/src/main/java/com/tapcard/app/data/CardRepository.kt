@@ -1,6 +1,7 @@
 package com.tapcard.app.data
 
 import android.content.Context
+import android.util.Log
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -313,20 +314,24 @@ object CardRepository {
     }
 
     private suspend fun ensureCloudSession(uid: String) {
-        val fs = CloudMode.firestore ?: return
+        Log.d("TapCardSync", "ensureCloudSession uid=$uid")
+        val fs = CloudMode.firestore ?: run { Log.d("TapCardSync", "firestore NULL"); return }
         val ctx = appContext ?: return
         try {
             val alreadyMigrated = ctx.cardStore.data.first()[migratedKey(uid)] == true
+            Log.d("TapCardSync", "alreadyMigrated=$alreadyMigrated")
             val cloudCards = fs.collection("cards").whereEqualTo("ownerUid", uid).get().await()
                 .documents.mapNotNull { CardMappers.fromCardMap(it.id, it.data ?: emptyMap()) }
 
-            if (alreadyMigrated || cloudCards.isNotEmpty()) {
-                if (cloudCards.isNotEmpty()) {
-                    _migrationState.value = MigrationState.CloudAlreadyHadCards
-                    adoptCloudSnapshot(cloudCards)
-                }
+            Log.d("TapCardSync", "cloudCards=${cloudCards.size}")
+            if (cloudCards.isNotEmpty()) {
+                // Account already has cloud cards (another device / earlier run):
+                // cloud is the source of truth, local stays as offline cache.
+                _migrationState.value = MigrationState.CloudAlreadyHadCards
+                adoptCloudSnapshot(cloudCards)
                 markMigrated(uid)
-            } else {
+            } else if (!alreadyMigrated) {
+                // First login: import the local cards (v1.x → cloud).
                 val local = _cards.value
                 _migrationState.value = MigrationState.InProgress(local.size)
                 var imported = 0
@@ -334,6 +339,22 @@ object CardRepository {
                     val ok = pushWithSlugRetry(card, uid)
                     if (ok) imported++
                 }
+                Log.d("TapCardSync", "migration imported=$imported of ${local.size}")
+                _migrationState.value = MigrationState.Done(imported)
+                markMigrated(uid)
+            } else {
+                // Flag set but cloud is empty (a previous run failed before
+                // persisting): retry the migration — idempotent because the
+                // slug claims and card ids are stable.
+                Log.d("TapCardSync", "flag set but cloud empty — retrying migration")
+                val local = _cards.value
+                _migrationState.value = MigrationState.InProgress(local.size)
+                var imported = 0
+                for (card in local) {
+                    val ok = pushWithSlugRetry(card, uid)
+                    if (ok) imported++
+                }
+                Log.d("TapCardSync", "retry migration imported=$imported of ${local.size}")
                 _migrationState.value = MigrationState.Done(imported)
                 markMigrated(uid)
             }
@@ -347,6 +368,7 @@ object CardRepository {
             attachCardsListener(uid)
             _syncState.value = SyncState.Synced
         } catch (e: Exception) {
+            Log.d("TapCardSync", "ensureCloudSession FAILED: ${e.javaClass.simpleName}: ${e.message}")
             _migrationState.value = MigrationState.Failed(e.message ?: "Migration failed")
             _syncState.value = SyncState.Error(e.message ?: "Sync failed")
         }
@@ -433,6 +455,7 @@ object CardRepository {
                 _syncState.value = SyncState.Synced
                 return true
             } catch (e: Exception) {
+                Log.d("TapCardSync", "push attempt ${attempt + 1} FAILED: ${e.javaClass.simpleName}: ${e.message}")
                 if (e.message?.contains("SLUG_TAKEN") == true) {
                     candidate = "${card.slug.ifBlank { slugify(card.name) }}-${attempt + 2}"
                 } else {
