@@ -2,6 +2,7 @@ package com.tapcard.app.data
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
@@ -24,24 +25,34 @@ object ImageStore {
     private fun dir(context: Context): File =
         File(context.filesDir, "card_images").apply { mkdirs() }
 
-    /** Copies, rotates upright, downscales and saves the picked image. */
+    /** Copies, rotates upright, downscales and saves the picked image.
+     *  Reads the source exactly ONCE into memory — photo-picker URIs may not
+     *  support multiple openInputStream reads (they hang/deny on re-read). */
     fun persist(context: Context, source: Uri, maxDim: Int = 1024): String? {
+        Log.d("TapCardImg", "persist uri=$source")
         return try {
-            // 1) Bounds pass
-            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            context.contentResolver.openInputStream(source)?.use {
-                BitmapFactory.decodeStream(it, null, bounds)
-            } ?: return null
+            // 1) Single read into memory
+            val bytes = context.contentResolver.openInputStream(source)?.use {
+                it.readBytes()
+            } ?: run { Log.d("TapCardImg", "persist FAILED: cannot open stream"); return null }
+            Log.d("TapCardImg", "read ${bytes.size} bytes")
 
-            // 2) Sampled decode
+            // 2) Bounds
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+                Log.d("TapCardImg", "persist FAILED: undecodable image")
+                return null
+            }
+
+            // 3) Sampled decode
             var sample = 1
             while (maxOf(bounds.outWidth, bounds.outHeight) / sample > maxDim * 2) sample *= 2
             val opts = BitmapFactory.Options().apply { inSampleSize = sample }
-            val src = context.contentResolver.openInputStream(source)?.use {
-                BitmapFactory.decodeStream(it, null, opts)
-            } ?: return null
+            val src = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
+                ?: run { Log.d("TapCardImg", "persist FAILED: decode null"); return null }
 
-            // 3) Downscale to maxDim
+            // 4) Downscale to maxDim
             val scale = if (maxOf(src.width, src.height) > maxDim)
                 maxDim.toFloat() / maxOf(src.width, src.height) else 1f
             val scaled = if (scale < 1f) Bitmap.createScaledBitmap(
@@ -51,20 +62,33 @@ object ImageStore {
                 true,
             ) else src
 
-            // 4) EXIF rotation → upright
-            val rotation = exifRotation(context, source)
+            // 5) EXIF rotation → upright (from the in-memory bytes)
+            val rotation = try {
+                val exif = ExifInterface(java.io.ByteArrayInputStream(bytes))
+                when (exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL,
+                )) {
+                    ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+                    ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+                    ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+                    else -> 0f
+                }
+            } catch (_: Exception) { 0f }
             val upright = if (rotation != 0f) Bitmap.createBitmap(
                 scaled, 0, 0, scaled.width, scaled.height,
                 Matrix().apply { postRotate(rotation) }, true,
             ) else scaled
 
-            // 5) Save
+            // 6) Save
             val file = File(dir(context), "img_${System.currentTimeMillis()}.jpg")
             FileOutputStream(file).use { out ->
                 upright.compress(Bitmap.CompressFormat.JPEG, 88, out)
             }
+            Log.d("TapCardImg", "persist OK -> ${file.absolutePath} (${upright.width}x${upright.height})")
             Uri.fromFile(file).toString()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.d("TapCardImg", "persist FAILED: ${e.javaClass.simpleName}: ${e.message}")
             null
         }
     }

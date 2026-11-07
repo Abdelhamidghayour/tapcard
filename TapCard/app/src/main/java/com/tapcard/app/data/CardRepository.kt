@@ -143,8 +143,15 @@ object CardRepository {
                 _activeCardId.value = seeded.firstOrNull()?.id
                 persist()
             } else {
-                _cards.value = doc.cards
-                _activeCardId.value = doc.activeCardId ?: doc.cards.firstOrNull()?.id
+                // Deduplicate by slug on load (keeps newest) — guards against
+                // duplicate artifacts from earlier migration runs.
+                val cleaned = doc.cards
+                    .sortedByDescending { it.updatedAt }
+                    .distinctBy { it.slug.ifBlank { it.id } }
+                _cards.value = cleaned
+                _activeCardId.value =
+                    if (cleaned.any { it.id == doc.activeCardId }) doc.activeCardId
+                    else cleaned.firstOrNull()?.id
                 _nfcWrites.value = doc.nfcWrites
                 _shares.value = doc.shares
             }
@@ -411,10 +418,20 @@ object CardRepository {
     }
 
     private fun adoptCloudSnapshot(remote: List<BusinessCard>) {
-        // Keep any optimistic local card that hasn't reached the cloud yet.
-        val remoteIds = remote.map { it.id }.toSet()
-        val pending = _cards.value.filter { it.id !in remoteIds }
-        _cards.value = remote + pending
+        // 1) Deduplicate remote docs by slug (double-migration artifacts) —
+        //    keep the most recently updated doc per slug.
+        val deduped = remote
+            .sortedByDescending { it.updatedAt }
+            .distinctBy { it.slug.ifBlank { it.id } }
+        // 2) Keep optimistic local cards that haven't reached the cloud yet,
+        //    dropping locals whose slug already exists in the cloud.
+        val remoteSlugs = deduped.map { it.slug.ifBlank { it.id } }.toSet()
+        val remoteIds = deduped.map { it.id }.toSet()
+        val pending = _cards.value
+            .filter { it.id !in remoteIds }
+            .filter { it.slug !in remoteSlugs }
+            .distinctBy { it.slug.ifBlank { it.id } }
+        _cards.value = deduped + pending
         if (_activeCardId.value !in _cards.value.map { it.id }) {
             _activeCardId.value = _cards.value.firstOrNull()?.id
         }
