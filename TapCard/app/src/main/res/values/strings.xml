@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">TapCard</string>
+    <string name="widget_qr_desc">QR code of my digital business card</string>
+    <string name="widget_label">TapCard QR</string>
 </resources>

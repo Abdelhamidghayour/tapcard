@@ -80,7 +80,13 @@ fun DashboardScreen(
     val nfcWrites by CardRepository.nfcWrites.collectAsState()
     val shares by CardRepository.shares.collectAsState()
     val haptics = LocalHapticFeedback.current
-    val context = LocalContext.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    // Keep the home-screen QR widget in sync with the active card
+    androidx.compose.runtime.DisposableEffect(context) {
+        com.tapcard.app.widget.QrWidgetProvider.refreshAll(context)
+        onDispose { }
+    }
 
     val initialIndex = cards.indexOfFirst { it.id == activeId }.coerceAtLeast(0)
     val pagerState = rememberPagerState(
@@ -247,6 +253,21 @@ fun DashboardScreen(
                 }
                 QuickTile(Icons.Filled.Edit, "New", Modifier.weight(1f), onClick = onCreateCard)
             }
+
+            Spacer(Modifier.height(16.dp))
+
+            // ---- Setup checklist (Tapni parity) ----
+            val checklist = com.tapcard.app.ui.components.rememberChecklist(
+                hasCard = cards.isNotEmpty(),
+                hasPhoto = activeCard?.profileImageUrl != null,
+                hasLogo = activeCard?.logoUrl != null,
+                hasSocials = (activeCard?.socials?.isNotEmpty() == true) ||
+                    (activeCard?.links?.isNotEmpty() == true),
+                hasAbout = !activeCard?.about.isNullOrBlank(),
+                nfcWritten = nfcWrites > 0,
+                sharedOnce = shares > 0,
+            )
+            com.tapcard.app.ui.components.SetupChecklistCard(items = checklist)
 
             Spacer(Modifier.height(16.dp))
 

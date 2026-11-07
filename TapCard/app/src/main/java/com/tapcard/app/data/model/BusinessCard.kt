@@ -16,6 +16,8 @@ data class BusinessCard(
     val email: String? = null,
     val website: String? = null,
     val socials: List<SocialLink> = emptyList(),
+    /** Link-in-bio custom links (Tapni-style). */
+    val links: List<CustomLink> = emptyList(),
     val accentIndex: Int = 0,
     val slug: String = "",
     val createdAt: Long = System.currentTimeMillis(),
@@ -42,6 +44,13 @@ data class BusinessCard(
         const val PUBLIC_URL_BASE = "https://tapcard.app/p/"
     }
 }
+
+/** A custom link-in-bio item (calendar, portfolio, booking, review…). */
+@Serializable
+data class CustomLink(
+    val label: String,
+    val url: String,
+)
 
 @Serializable
 data class SocialLink(

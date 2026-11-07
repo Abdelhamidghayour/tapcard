@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -58,6 +59,7 @@ import com.tapcard.app.data.CardRepository
 import com.tapcard.app.data.ImageStore
 import com.tapcard.app.data.cloud.CloudMode
 import com.tapcard.app.data.model.BusinessCard
+import com.tapcard.app.data.model.CustomLink
 import com.tapcard.app.data.model.SocialLink
 import com.tapcard.app.data.ocr.OcrPrefillStore
 import com.tapcard.app.ui.components.CardSurface
@@ -98,6 +100,9 @@ fun CreateCardScreen(
     var attemptedSave by rememberSaveable { mutableStateOf(false) }
     var socials by rememberSaveable {
         mutableStateOf(existing?.socials ?: emptyList())
+    }
+    var links by rememberSaveable {
+        mutableStateOf(existing?.links ?: emptyList())
     }
     var profileImage by rememberSaveable { mutableStateOf(existing?.profileImageUrl) }
     var logoImage by rememberSaveable { mutableStateOf(existing?.logoUrl) }
@@ -142,6 +147,7 @@ fun CreateCardScreen(
         address = address.ifBlank { null },
         about = about.ifBlank { null },
         socials = socials,
+        links = links,
         accentIndex = accentIndex,
         templateIndex = templateIndex,
         profileImageUrl = profileImage,
@@ -397,6 +403,52 @@ fun CreateCardScreen(
             }
         }
 
+        SectionHeader("Link in bio")
+        Column(
+            modifier = Modifier.padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            links.forEachIndexed { index, link ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = link.label,
+                        onValueChange = { v ->
+                            links = links.mapIndexed { i, l ->
+                                if (i == index) l.copy(label = v) else l
+                            }
+                        },
+                        label = { Text("Label") },
+                        singleLine = true,
+                        modifier = Modifier.width(120.dp),
+                    )
+                    Spacer(Modifier.size(8.dp))
+                    OutlinedTextField(
+                        value = link.url,
+                        onValueChange = { v ->
+                            links = links.mapIndexed { i, l ->
+                                if (i == index) l.copy(url = v) else l
+                            }
+                        },
+                        label = { Text("URL") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(onClick = {
+                        links = links.filterIndexed { i, _ -> i != index }
+                    }) {
+                        Icon(Icons.Filled.Close, contentDescription = "Remove link")
+                    }
+                }
+            }
+            OutlinedButton(
+                onClick = { links = links + CustomLink("", "https://") },
+                enabled = links.size < 8,
+                shape = MaterialTheme.shapes.medium,
+            ) {
+                Text("+ Add link (calendar, portfolio…)")
+            }
+        }
+
         SectionHeader("Appearance")
         Text(
             "Template",
@@ -502,6 +554,7 @@ fun CreateCardScreen(
                                 website = website.trim().ifBlank { null },
                                 address = address.trim().ifBlank { null },
                                 about = about.trim().ifBlank { null },
+                                links = links,
                                 socials = socials,
                                 accentIndex = accentIndex,
                                 templateIndex = templateIndex,
@@ -523,6 +576,7 @@ fun CreateCardScreen(
                                 website = website.trim().ifBlank { null },
                                 address = address.trim().ifBlank { null },
                                 about = about.trim().ifBlank { null },
+                                links = links,
                                 socials = socials,
                                 accentIndex = accentIndex,
                                 templateIndex = templateIndex,

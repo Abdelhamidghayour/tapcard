@@ -25,6 +25,17 @@
             </intent-filter>
         </activity>
 
+        <receiver
+            android:name=".widget.QrWidgetProvider"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_qr_info" />
+        </receiver>
+
         <!-- Shares generated QR PNGs from cache without storage permissions -->
         <provider
             android:name="androidx.core.content.FileProvider"

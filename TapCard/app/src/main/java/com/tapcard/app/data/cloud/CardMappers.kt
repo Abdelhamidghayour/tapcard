@@ -1,6 +1,7 @@
 package com.tapcard.app.data.cloud
 
 import com.tapcard.app.data.model.BusinessCard
+import com.tapcard.app.data.model.CustomLink
 import com.tapcard.app.data.model.SocialLink
 import com.tapcard.app.data.model.slugify
 
@@ -14,7 +15,7 @@ object CardMappers {
     val PUBLIC_FIELDS = listOf(
         "name", "jobTitle", "company", "email", "phone", "website",
         "socials", "profileImageUrl", "logoUrl", "address", "about",
-        "accentIndex", "templateIndex", "landscape", "headerImage",
+        "accentIndex", "templateIndex", "landscape", "headerImage", "links",
         "ownerUid", "cardId", "updatedAt",
     )
 
@@ -27,6 +28,7 @@ object CardMappers {
         "phone" to card.phone,
         "website" to card.website,
         "socials" to card.socials.map { mapOf("platform" to it.platform, "url" to it.url) },
+        "links" to card.links.map { mapOf("label" to it.label, "url" to it.url) },
         "profileImageUrl" to card.profileImageUrl,
         "logoUrl" to card.logoUrl,
         "address" to card.address,
@@ -68,6 +70,12 @@ object CardMappers {
         socials = (data["socials"] as? List<Map<String, Any>>)?.map {
             SocialLink(
                 platform = it["platform"] as? String ?: "",
+                url = it["url"] as? String ?: "",
+            )
+        } ?: emptyList(),
+        links = (data["links"] as? List<Map<String, Any>>)?.map {
+            CustomLink(
+                label = it["label"] as? String ?: "",
                 url = it["url"] as? String ?: "",
             )
         } ?: emptyList(),

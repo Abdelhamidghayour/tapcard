@@ -71,7 +71,7 @@ service cloud.firestore {
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.keys().hasOnly(
              ['name','jobTitle','company','email','phone','website','socials',
-              'profileImageUrl','logoUrl','address','about','accentIndex','templateIndex',
+              'profileImageUrl','logoUrl','address','about','accentIndex','templateIndex','links',
               'ownerUid','cardId','updatedAt'])
         && str(request.resource.data.name, 120);
       allow update: if isSignedIn()
