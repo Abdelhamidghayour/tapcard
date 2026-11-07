@@ -154,7 +154,7 @@ fun SettingsScreen() {
             )
             SettingsRow(
                 title = "Version",
-                value = "1.0.0 (milestone 1)",
+                value = "4.1.2",
                 icon = Icons.Filled.Info,
             )
             Text(
