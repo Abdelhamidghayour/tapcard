@@ -67,6 +67,8 @@ sealed interface UploadState {
     data object Idle : UploadState
     data class Uploading(val progressPercent: Int) : UploadState
     data object Done : UploadState
+    /** Image saved on the device; cloud mirror unavailable (Storage not provisioned). */
+    data object SavedOnDevice : UploadState
     data class Failed(val message: String) : UploadState
 }
 
@@ -223,15 +225,20 @@ object CardRepository {
     /** kind: "profile" or "logo" */
     fun uploadCardImage(cardId: String, imageUri: Uri, kind: String = "profile") {
         val context = appContext ?: return
-        val storage = CloudMode.storage ?: run {
-            _uploadState.value = UploadState.Failed("Cloud storage not configured")
+
+        // 1) ALWAYS persist locally first — the card shows the image instantly
+        //    and it survives restarts, with or without cloud.
+        val card = cardById(cardId)
+        val storedLocally = card?.let { setLocalImage(cardId, imageUri, kind) } ?: false
+
+        // 2) Cloud mirror is best-effort: a missing bucket or signed-out state
+        //    must never surface as a user-facing error.
+        val storage = CloudMode.storage
+        val uid = AuthManager.currentUid
+        if (storage == null || uid == null || card == null || !storedLocally) {
+            _uploadState.value = UploadState.SavedOnDevice
             return
         }
-        val uid = AuthManager.currentUid ?: run {
-            _uploadState.value = UploadState.Failed("Sign in first")
-            return
-        }
-        val card = cardById(cardId) ?: return
         scope.launch {
             try {
                 _uploadState.value = UploadState.Uploading(5)
@@ -249,7 +256,8 @@ object CardRepository {
                 )
                 _uploadState.value = UploadState.Done
             } catch (e: Exception) {
-                _uploadState.value = UploadState.Failed(e.message ?: "Upload failed")
+                // Local copy already in place — degrade quietly.
+                _uploadState.value = UploadState.SavedOnDevice
             }
         }
     }

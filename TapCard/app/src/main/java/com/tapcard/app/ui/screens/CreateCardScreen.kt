@@ -149,18 +149,28 @@ fun CreateCardScreen(
         slug = existing?.slug ?: "",
     )
 
+    var pendingNewProfileImage by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingNewLogoImage by rememberSaveable { mutableStateOf<String?>(null) }
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null && existing != null) {
+        if (uri != null) {
             val local = ImageStore.persist(context, uri)
-            if (local != null) profileImage = local
-            if (CloudMode.isConfigured) CardRepository.uploadCardImage(existing.id, uri, "profile")
+            if (local != null) {
+                profileImage = local
+                if (existing != null) {
+                    if (CloudMode.isConfigured) CardRepository.uploadCardImage(existing.id, uri, "profile")
+                } else pendingNewProfileImage = local
+            }
         }
     }
     val logoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null && existing != null) {
+        if (uri != null) {
             val local = ImageStore.persist(context, uri)
-            if (local != null) logoImage = local
-            if (CloudMode.isConfigured) CardRepository.uploadCardImage(existing.id, uri, "logo")
+            if (local != null) {
+                logoImage = local
+                if (existing != null) {
+                    if (CloudMode.isConfigured) CardRepository.uploadCardImage(existing.id, uri, "logo")
+                } else pendingNewLogoImage = local
+            }
         }
     }
 
@@ -204,7 +214,7 @@ fun CreateCardScreen(
                 label = "Profile photo",
                 image = profileImage,
                 size = 72.dp,
-                enabled = existing != null,
+                enabled = true,
                 onPick = {
                     photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 },
@@ -217,7 +227,7 @@ fun CreateCardScreen(
                 label = "Company logo",
                 image = logoImage,
                 size = 72.dp,
-                enabled = existing != null,
+                enabled = true,
                 onPick = {
                     logoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 },
@@ -227,19 +237,13 @@ fun CreateCardScreen(
                 },
             )
         }
-        if (existing == null) {
-            Text(
-                "Save the card first, then add photos to it.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
-            )
-        }
         when (val up = uploadState) {
             is com.tapcard.app.data.UploadState.Uploading ->
                 Text("Uploading… ${up.progressPercent}%", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 24.dp))
             is com.tapcard.app.data.UploadState.Failed ->
                 Text("Upload failed: ${up.message}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 24.dp))
+            com.tapcard.app.data.UploadState.SavedOnDevice ->
+                Text("Photo saved on this device", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 24.dp))
             else -> Unit
         }
 
@@ -522,6 +526,8 @@ fun CreateCardScreen(
                                 socials = socials,
                                 accentIndex = accentIndex,
                                 templateIndex = templateIndex,
+                                profileImageUrl = pendingNewProfileImage,
+                                logoUrl = pendingNewLogoImage,
                             ),
                         )
                         onSaved(card.id)
