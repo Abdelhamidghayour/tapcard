@@ -9,30 +9,30 @@ import androidx.compose.ui.graphics.Color
 // ---------------------------------------------------------------------------
 
 // Plasma core (primary gradient + glow)
-val PlasmaStart = Color(0xFF7C3AED)
-val PlasmaMid = Color(0xFFA855F7)
-val PlasmaEnd = Color(0xFFC084FC)
-val PlasmaGlow = Color(0xFFA855F7)
+val PlasmaStart = Color(0xFF479EFA)
+val PlasmaMid = Color(0xFF479EFA)
+val PlasmaEnd = Color(0xFF0A99D2)
+val PlasmaGlow = Color(0xFF479EFA)
 
 // Lime punch (active / success / highlight)
-val Lime = Color(0xFFD7F647)
-val LimeDeep = Color(0xFFB7DC26)
+val Lime = Color(0xFF5FC163)
+val LimeDeep = Color(0xFF479EFA)
 
 // Dark canvas
-val VoidBlack = Color(0xFF08070D)
-val PanelDark = Color(0xFF12111A)
-val PanelDarkElevated = Color(0xFF1A1826)
-val BorderViolet = Color(0xFF2A2440)
+val VoidBlack = Color(0xFF151515)
+val PanelDark = Color(0xFF1A1A1A)
+val PanelDarkElevated = Color(0xFF242424)
+val BorderViolet = Color(0xFF3A3A3A)
 
 // Text
-val TextBright = Color(0xFFF5F3FA)
-val TextDim = Color(0xFFA7A3B8)
+val TextBright = Color(0xFFF4F4F4)
+val TextDim = Color(0xFF9A9A9A)
 
 // Light theme neutrals (violet-tinted warm white)
-val LBg = Color(0xFFF4F2FA)
+val LBg = Color(0xFFF8F9FA)
 val LSurface = Color(0xFFFFFFFF)
-val LSurfaceVariant = Color(0xFFECE9F6)
-val LOutline = Color(0xFFD9D4EA)
+val LSurfaceVariant = Color(0xFFECECEC)
+val LOutline = Color(0xFFE0E0E0)
 
 // Semantic
 val Success = Color(0xFF2F9E77)
@@ -40,17 +40,17 @@ val ErrorRed = Color(0xFFC4442A)
 val ErrorRedDark = Color(0xFFE27B62)
 
 // Light scheme tokens
-val LPrimary = PlasmaStart
-val LSecondary = LimeDeep
-val LOnBg = Color(0xFF141220)
+val LPrimary = Color(0xFF479EFA)
+val LSecondary = Color(0xFF479EFA)
+val LOnBg = Color(0xFF151515)
 
 // Dark scheme tokens
 val DPrimary = PlasmaMid
 val DSecondary = Lime
 
 // Brand gradient — plasma (used by GradientButton across the app)
-val BrandGradient = Brush.linearGradient(listOf(PlasmaStart, PlasmaMid, PlasmaEnd))
-val BrandGradientColors = listOf(PlasmaStart, PlasmaMid, PlasmaEnd)
+val BrandGradient = Brush.linearGradient(listOf(Color(0xFF479EFA), Color(0xFF0A99D2)))
+val BrandGradientColors = listOf(Color(0xFF479EFA), Color(0xFF0A99D2))
 
 /** Soft radial glow used behind buttons/avatars/cards. */
 fun plasmaGlow(alpha: Float = 0.45f): Brush = Brush.radialGradient(
